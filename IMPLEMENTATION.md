@@ -19,9 +19,9 @@
 
 | Date | Step | Status | Notes |
 |------|------|--------|-------|
-| 2026-07-21 | Management Groups created | ⬜ Todo | `mg-sandbox`, `mg-production` |
-| 2026-07-21 | Subscription moved under mg-sandbox | ⬜ Todo | |
-| 2026-07-21 | Budget alerts configured | ⬜ Todo | 50/80/95/100% |
+| 2026-07-21 | Management Groups created | ✅ Done | `mg-sandbox`, `mg-production` |
+| 2026-07-21 | Subscription moved under mg-sandbox | ✅ Done | Trial sub moved to sandbox |
+| 2026-07-21 | Budget alerts configured | ✅ Done | 50/80/95/100% thresholds set |
 | 2026-07-21 | Tags applied | ⬜ Todo | Environment, CostControl, Owner, Project |
 
 ### GCP Foundation
