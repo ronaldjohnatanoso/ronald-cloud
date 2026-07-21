@@ -28,10 +28,10 @@
 
 | Date | Step | Status | Notes |
 |------|------|--------|-------|
-| 2026-07-21 | Cloud Identity set up | ⬜ Todo | |
-| 2026-07-21 | GCP Organization created | ⬜ Todo | |
-| 2026-07-21 | Folders created | ⬜ Todo | `ronald-platform`, `ronald-playground` |
-| 2026-07-21 | First GCP project created | ⬜ Todo | `gcp-platform-dev` |
+| 2026-07-21 | Cloud Identity set up | ✅ Done | Free tier, `admin@ronaldatanoso.com` as super admin |
+| 2026-07-21 | GCP Organization created | ✅ Done | `ronaldatanoso.com` org verified |
+| 2026-07-21 | Folders created | ✅ Done | `ronald-platform`, `ronald-playground` |
+| 2026-07-21 | First GCP project created | ⬜ Todo | `gcp-platform-dev` under ronald-playground |
 
 ---
 
