@@ -41,11 +41,11 @@
 
 | Date | Step | Status | Notes |
 |------|------|--------|-------|
-| 2026-07-21 | React + Vite + TS scaffolded | ⬜ Todo | |
-| 2026-07-21 | Tailwind + shadcn/ui installed | ⬜ Todo | |
-| 2026-07-21 | CopilotKit integrated | ⬜ Todo | |
-| 2026-07-21 | Pages built | ⬜ Todo | Home, About, Resume, Certs, Projects, Blog, Contact |
-| 2026-07-21 | Deployed to Azure Static Web Apps | ⬜ Todo | |
+| 2026-07-21 | Next.js scaffolded | ✅ Done | App Router, TypeScript, Tailwind, CopilotKit |
+| 2026-07-21 | Pages stubbed | ✅ Done | Home, About, Resume, Certs, Projects, Blog, Contact |
+| 2026-07-21 | CopilotKit "Ask Ronald" component | ✅ Done | Floating chat button |
+| 2026-07-21 | `npm install` | ⬜ Todo | Run on cloud machine |
+| 2026-07-21 | Deploy to Azure Static Web Apps | ⬜ Todo | |
 | 2026-07-21 | Custom domain configured | ⬜ Todo | ronaldatanoso.com |
 
 ### Backend
