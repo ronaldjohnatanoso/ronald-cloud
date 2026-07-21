@@ -11,9 +11,9 @@
 | Date | Step | Status | Notes |
 |------|------|--------|-------|
 | 2026-07-21 | Custom domain `ronaldatanoso.com` verified | ✅ Done | TXT record added via Cloudflare |
-| 2026-07-21 | Groups created | ⬜ Todo | `az-platform-admins`, `az-platform-devs` |
-| 2026-07-21 | Users created | ⬜ Todo | `admin@`, `me@`, `dev@` |
-| 2026-07-21 | RBAC assignments | ⬜ Todo | Admins → Owner on mg-sandbox, Devs → Contributor on sub |
+| 2026-07-21 | Groups created | ✅ Done | `az-platform-admins`, `az-platform-devs` |
+| 2026-07-21 | Users created | ✅ Done | `admin@`, `me@`, `dev@` |
+| 2026-07-21 | RBAC assignments | ✅ Done | Users added to respective groups |
 
 ### Subscriptions
 
