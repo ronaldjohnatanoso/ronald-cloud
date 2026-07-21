@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import "@copilotkit/react-core/v2/styles.css";
 import "./globals.css";
 import { CopilotKit } from "@copilotkit/react-core/v2";
 import { CopilotSidebar } from "@copilotkit/react-core/v2";
@@ -19,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <CopilotKit>
+        <CopilotKit runtimeUrl="/api/copilotkit">
           <CopilotSidebar />
           <nav className="border-b px-6 py-4 flex items-center justify-between">
             <div className="font-bold text-lg">Ronald Atanoso</div>
