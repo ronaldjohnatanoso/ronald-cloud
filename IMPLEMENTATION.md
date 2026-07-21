@@ -22,7 +22,7 @@
 | 2026-07-21 | Management Groups created | ✅ Done | `mg-sandbox`, `mg-production` |
 | 2026-07-21 | Subscription moved under mg-sandbox | ✅ Done | Trial sub moved to sandbox |
 | 2026-07-21 | Budget alerts configured | ✅ Done | 50/80/95/100% thresholds set |
-| 2026-07-21 | Tags applied | ⬜ Todo | Environment, CostControl, Owner, Project |
+| 2026-07-21 | Tags applied | ✅ Done | Environment=Lab, CostControl=AutoShutdown, Owner=Ronald, Project=cloud-enterprise-platform |
 
 ### GCP Foundation
 
