@@ -6,7 +6,6 @@
     "dev": "next dev --port 3010",
     "build": "next build",
     "start": "next start",
-    "postinstall": "node scripts/patch-copilotkit.js",
     "lint": "next lint"
   },
   "dependencies": {
