@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "@copilotkit/react-core/v2/styles.css";
 import "./globals.css";
-import { CopilotKit } from "@copilotkit/react-core/v2";
-import { CopilotSidebar } from "@copilotkit/react-core/v2";
+import CopilotProvider from "@/components/CopilotProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,8 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <CopilotKit runtimeUrl="/api/copilotkit">
-          <CopilotSidebar />
+        <CopilotProvider>
           <nav className="border-b px-6 py-4 flex items-center justify-between">
             <div className="font-bold text-lg">Ronald Atanoso</div>
             <div className="flex gap-6 text-sm">
@@ -38,7 +36,7 @@ export default function RootLayout({
           <footer className="border-t px-6 py-6 text-center text-sm text-gray-500">
             © {new Date().getFullYear()} Ronald Atanoso — Built on Azure + GCP
           </footer>
-        </CopilotKit>
+        </CopilotProvider>
       </body>
     </html>
   );
