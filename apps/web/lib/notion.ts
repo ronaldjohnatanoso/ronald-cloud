@@ -1,177 +1,79 @@
-// Notion API client and helpers
 import { Client } from '@notionhq/client';
-import {
-  PageObjectResponse,
-  BlockObjectResponse,
-  RichTextItemResponse,
-  PropertyItemObjectResponse,
-} from '@notionhq/client/build/src/api-endpoints';
 
-// ─── Client ─────────────────────────────────────────────────────────────────
-
-export const notion = new Client({
+const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+const DATABASE_ID = process.env.NOTION_PORTFOLIO_DB_ID || '3a617eea-36e6-802b-8412-f289637b0b4f';
 
-export interface NotionPageSummary {
+export interface PortfolioPage {
   id: string;
-  title: string;
-  category?: string;
-  slug?: string;
-  tags?: string[];
-  createdAt: string;
+  name: string;
+  slug: string;
+  category: string;
   lastEdited: string;
-  url: string;
 }
 
 export interface NotionBlock {
   id: string;
   type: string;
   content: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Extract plain text from a title property */
-export function getTitle(page: PageObjectResponse): string {
-  const props = page.properties;
-  for (const [, prop] of Object.entries(props)) {
-    if (prop.type === 'title') {
-      return prop.title.map((t: RichTextItemResponse) => t.plain_text).join('') || 'Untitled';
-    }
-  }
-  return 'Untitled';
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-/** Extract a plain text property value */
-export function getRichText(page: PageObjectResponse, key: string): string {
-  const prop = page.properties[key];
-  if (!prop || prop.type !== 'rich_text') return '';
-  return (prop.rich_text as RichTextItemResponse[])
-    .map((t) => t.plain_text)
-    .join('');
+// Transform raw Notion block { type, paragraph: { rich_text } }
+// into simplified { type, content: { rich_text } }
+export function simplifyBlock(block: Record<string, unknown>): NotionBlock {
+  const type = block.type as string;
+  return {
+    id: block.id as string,
+    type,
+    content: (block[type] as Record<string, unknown>) || {},
+  };
 }
 
-/** Extract a select property value */
-export function getSelect(page: PageObjectResponse, key: string): string {
-  const prop = page.properties[key];
-  if (!prop || prop.type !== 'select') return '';
-  return (prop as { select: { name: string } | null }).select?.name ?? '';
+export async function getPortfolioItems(category?: 'About' | 'Resume' | 'Project' | 'Certification' | 'Blog'): Promise<PortfolioPage[]> {
+  const pages = await getPortfolioPages();
+  if (!category) return pages;
+  return pages.filter(p => p.category === category);
 }
 
-/** Extract a multi-select property values */
-export function getMultiSelect(page: PageObjectResponse, key: string): string[] {
-  const prop = page.properties[key];
-  if (!prop || prop.type !== 'multi_select') return [];
-  return (prop as { multi_select: { name: string }[] }).multi_select.map((s) => s.name);
-}
-
-/** Extract date from a page */
-export function getDate(page: PageObjectResponse, key: string): string {
-  const prop = page.properties[key];
-  if (!prop || prop.type !== 'date') return '';
-  return (prop as { date: { start: string } | null }).date?.start ?? '';
-}
-
-/** Build a URL slug from title */
-export function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
-// ─── Page Content ─────────────────────────────────────────────────────────────
-
-/** Get all blocks from a page (handles pagination) */
-export async function getPageBlocks(pageId: string): Promise<BlockObjectResponse[]> {
-  const blocks: BlockObjectResponse[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const response = await notion.blocks.children.list({
-      block_id: pageId,
-      start_cursor: cursor,
-      page_size: 100,
-    });
-    blocks.push(...(response.results as BlockObjectResponse[]));
-    cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
-  } while (cursor);
-
-  return blocks;
-}
-
-/** Convert a Notion block to our simplified block format */
-export function simplifyBlock(block: BlockObjectResponse): NotionBlock {
-  const type = block.type;
-  const content = (block as Record<string, unknown>)[type] as Record<string, unknown>;
-  return { id: block.id, type, content };
-}
-
-// ─── Database Queries ─────────────────────────────────────────────────────────
-
-const PORTFOLIO_DB = process.env.NOTION_PORTFOLIO_DB;
-const BLOG_DB = process.env.NOTION_BLOG_DB;
-
-/** Query the Portfolio database by category */
-export async function getPortfolioItems(
-  category?: 'About' | 'Resume' | 'Project' | 'Certification' | 'Blog'
-): Promise<NotionPageSummary[]> {
-  if (!PORTFOLIO_DB) return [];
-
-  const filter = category
-    ? {
-        property: 'Category',
-        select: { equals: category },
-      }
-    : undefined;
-
-  const response = await notion.databases.query({
-    database_id: PORTFOLIO_DB,
-    filter,
-    sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+export async function getPortfolioPages(): Promise<PortfolioPage[]> {
+  const { results } = await notion.search({
+    filter: { value: 'page', property: 'object' },
+    page_size: 100,
   });
 
-  return (response.results as PageObjectResponse[]).map((page) => ({
-    id: page.id,
-    title: getTitle(page),
-    category: getSelect(page, 'Category'),
-    slug: slugify(getTitle(page)),
-    tags: getMultiSelect(page, 'Tags'),
-    createdAt: page.created_time,
-    lastEdited: page.last_edited_time,
-    url: page.url,
-  }));
+  return results
+    .filter((page: { parent?: { database_id?: string }; properties?: { Name?: { title?: { plain_text: string }[] }; Category?: { select?: { name?: string } } } }) => 
+      page.parent?.database_id === DATABASE_ID &&
+      page.properties?.Name?.title?.[0]?.plain_text
+    )
+    .map((page: { id: string; last_edited_time: string; properties?: { Name?: { title?: { plain_text: string }[] }; Category?: { select?: { name?: string } } } }) => ({
+      id: page.id,
+      name: page.properties?.Name?.title?.[0]?.plain_text || '',
+      slug: slugify(page.properties?.Name?.title?.[0]?.plain_text || page.id),
+      category: page.properties?.Category?.select?.name || 'General',
+      lastEdited: page.last_edited_time,
+    }));
 }
 
-/** Query the Blog database */
-export async function getBlogPosts(): Promise<NotionPageSummary[]> {
-  if (!BLOG_DB) return [];
-
-  const response = await notion.databases.query({
-    database_id: BLOG_DB,
-    sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+export async function getPageBlocks(pageId: string): Promise<NotionBlock[]> {
+  const { results } = await notion.blocks.children.list({
+    block_id: pageId,
+    page_size: 100,
   });
-
-  return (response.results as PageObjectResponse[]).map((page) => ({
-    id: page.id,
-    title: getTitle(page),
-    category: 'Blog',
-    slug: slugify(getRichText(page, 'Slug') || getTitle(page)),
-    tags: getMultiSelect(page, 'Tags'),
-    createdAt: page.created_time,
-    lastEdited: page.last_edited_time,
-    url: page.url,
-  }));
+  return results.map(simplifyBlock) as NotionBlock[];
 }
 
-/** Get a single page by ID */
-export async function getPage(pageId: string): Promise<PageObjectResponse | null> {
-  try {
-    return (await notion.pages.retrieve({ page_id: pageId })) as PageObjectResponse;
-  } catch {
-    return null;
-  }
+export async function getPageBySlug(slug: string): Promise<PortfolioPage | null> {
+  const pages = await getPortfolioPages();
+  return pages.find(p => p.slug === slug) || null;
 }
+
+export { notion };
