@@ -18,14 +18,21 @@ interface ProjectItem {
 }
 
 async function getProjects(): Promise<ProjectItem[]> {
+  console.log('[ProjectsPage] fetching from API...');
   try {
     const res = await fetch(`${SITE_URL}/api/notion/portfolio?category=Project`, {
       next: { revalidate: 3600 },
     });
-    if (!res.ok) return [];
+    console.log('[ProjectsPage] API response status:', res.status);
+    if (!res.ok) {
+      console.error('[ProjectsPage] API not ok');
+      return [];
+    }
     const data = await res.json();
+    console.log('[ProjectsPage] API data:', JSON.stringify(data));
     return data.items || [];
-  } catch {
+  } catch (e) {
+    console.error('[ProjectsPage] fetch error:', e);
     return [];
   }
 }
@@ -44,6 +51,7 @@ async function getPageContent(pageId: string) {
 
 export default async function ProjectsPage() {
   const projects = await getProjects();
+  console.log('[ProjectsPage] projects:', projects.length, projects.map(p => p.name));
 
   if (projects.length === 0) {
     return (
@@ -56,7 +64,6 @@ export default async function ProjectsPage() {
     );
   }
 
-  // Fetch content for all projects in parallel
   const projectData = await Promise.all(
     projects.map(async (p) => {
       const data = await getPageContent(p.id);
