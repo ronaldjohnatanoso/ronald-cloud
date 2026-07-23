@@ -26,6 +26,23 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
+// Map page names to category types (handles singular/plural)
+function nameToCategory(name: string): string {
+  const map: Record<string, string> = {
+    'about me': 'About',
+    'about': 'About',
+    'resume': 'Resume',
+    'resumes': 'Resume',
+    'projects': 'Project',
+    'project': 'Project',
+    'certifications': 'Certification',
+    'certification': 'Certification',
+    'contact': 'Contact',
+    'blog': 'Blog',
+  };
+  return map[name.toLowerCase()] || 'General';
+}
+
 // Transform raw Notion block { type, paragraph: { rich_text } }
 // into simplified { type, content: { rich_text } }
 export function simplifyBlock(block: Record<string, unknown>): NotionBlock {
@@ -40,7 +57,7 @@ export function simplifyBlock(block: Record<string, unknown>): NotionBlock {
 export async function getPortfolioItems(category?: 'About' | 'Resume' | 'Project' | 'Certification' | 'Blog'): Promise<PortfolioPage[]> {
   const pages = await getPortfolioPages();
   if (!category) return pages;
-  return pages.filter(p => p.category === category);
+  return pages.filter(p => p.category === category || nameToCategory(p.name) === category);
 }
 
 export async function getPortfolioPages(): Promise<PortfolioPage[]> {
@@ -49,18 +66,24 @@ export async function getPortfolioPages(): Promise<PortfolioPage[]> {
     page_size: 100,
   });
 
-  return results
-    .filter((page: { parent?: { database_id?: string }; properties?: { Name?: { title?: { plain_text: string }[] }; Category?: { select?: { name?: string } } } }) => 
-      page.parent?.database_id === DATABASE_ID &&
-      page.properties?.Name?.title?.[0]?.plain_text
-    )
-    .map((page: { id: string; last_edited_time: string; properties?: { Name?: { title?: { plain_text: string }[] }; Category?: { select?: { name?: string } } } }) => ({
-      id: page.id,
-      name: page.properties?.Name?.title?.[0]?.plain_text || '',
-      slug: slugify(page.properties?.Name?.title?.[0]?.plain_text || page.id),
-      category: page.properties?.Category?.select?.name || 'General',
-      lastEdited: page.last_edited_time,
-    }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (results as any[])
+    .filter((page: any) => {
+      const titleProp = page.properties?.Category?.title || page.properties?.Name?.title;
+      return page.parent?.database_id === DATABASE_ID && titleProp?.[0]?.plain_text;
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((page: any) => {
+      const titleProp = page.properties?.Category?.title || page.properties?.Name?.title;
+      const name = titleProp?.[0]?.plain_text || '';
+      return {
+        id: page.id,
+        name,
+        slug: slugify(name),
+        category: nameToCategory(name),
+        lastEdited: page.last_edited_time,
+      };
+    });
 }
 
 export async function getPageBlocks(pageId: string): Promise<NotionBlock[]> {
