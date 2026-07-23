@@ -9,7 +9,15 @@ export const metadata: Metadata = {
   description: 'Portfolio projects',
 };
 
-async function getProjects() {
+interface ProjectItem {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  lastEdited: string;
+}
+
+async function getProjects(): Promise<ProjectItem[]> {
   try {
     const res = await fetch(`${SITE_URL}/api/notion/portfolio?category=Project`, {
       next: { revalidate: 3600 },
@@ -22,7 +30,7 @@ async function getProjects() {
   }
 }
 
-async function getProjectContent(pageId: string) {
+async function getPageContent(pageId: string) {
   try {
     const res = await fetch(`${SITE_URL}/api/notion/page/${pageId}`, {
       next: { revalidate: 3600 },
@@ -42,45 +50,41 @@ export default async function ProjectsPage() {
       <div className="max-w-5xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold mb-8">Projects</h1>
         <p className="text-muted-foreground">
-          Add pages with Category "Project" to your Notion Portfolio database to display them here.
+          Add pages with Category &quot;Project&quot; to your Notion Portfolio database to display them here.
         </p>
       </div>
     );
   }
 
+  // Fetch content for all projects in parallel
+  const projectData = await Promise.all(
+    projects.map(async (p) => {
+      const data = await getPageContent(p.id);
+      const firstPara = data?.blocks?.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (b: any) => b.type === 'paragraph'
+      );
+      const description = firstPara?.content?.rich_text
+        ?.map((t: { plain_text: string }) => t.plain_text)
+        .join('')
+        ?.substring(0, 150) || '';
+      return { ...p, description };
+    })
+  );
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold mb-8">Projects</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projects.map(async (p: { id: string; title: string; tags?: string[]; lastEdited: string }) => {
-          const data = await getProjectContent(p.id);
-          const firstPara = data?.blocks?.find(
-            (b: { type: string; content: { rich_text?: { plain_text: string }[] } }) =>
-              b.type === 'paragraph'
-          );
-
-          return (
-            <article key={p.id} className="border rounded-xl p-6 hover:border-gray-400 transition">
-              <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
-              {firstPara && (
-                <p className="text-muted-foreground text-sm mb-3">
-                  {(firstPara.content as { rich_text: { plain_text: string }[] }).rich_text
-                    ?.map((t: { plain_text: string }) => t.plain_text)
-                    .join('')
-                    .substring(0, 150)}
-                  ...
-                </p>
-              )}
-              {p.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {p.tags.map((tag: string) => (
-                    <span key={tag} className="px-2 py-1 text-xs border rounded-full">{tag}</span>
-                  ))}
-                </div>
-              )}
-            </article>
-          );
-        })}
+        {projectData.map((p) => (
+          <article key={p.id} className="border rounded-xl p-6 hover:border-gray-400 transition">
+            <h2 className="text-xl font-semibold mb-2">{p.name}</h2>
+            {p.description && (
+              <p className="text-muted-foreground text-sm mb-3">{p.description}...</p>
+            )}
+            <p className="text-xs text-gray-400">Last updated: {new Date(p.lastEdited).toLocaleDateString()}</p>
+          </article>
+        ))}
       </div>
     </div>
   );
