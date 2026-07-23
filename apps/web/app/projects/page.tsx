@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://213.35.103.15:3066';
+// Server-side fetch must use localhost — server can't reach its own public IP
+const API_BASE = process.env.NODE_ENV === 'production'
+  ? SITE_URL
+  : 'http://localhost:3066';
 
 export const revalidate = 3600;
 
@@ -20,7 +24,7 @@ interface ProjectItem {
 async function getProjects(): Promise<ProjectItem[]> {
   console.log('[ProjectsPage] fetching from API...');
   try {
-    const res = await fetch(`${SITE_URL}/api/notion/portfolio?category=Project`, {
+    const res = await fetch(`${API_BASE}/api/notion/portfolio?category=Project`, {
       next: { revalidate: 3600 },
     });
     console.log('[ProjectsPage] API response status:', res.status);
@@ -39,7 +43,7 @@ async function getProjects(): Promise<ProjectItem[]> {
 
 async function getPageContent(pageId: string) {
   try {
-    const res = await fetch(`${SITE_URL}/api/notion/page/${pageId}`, {
+    const res = await fetch(`${API_BASE}/api/notion/page/${pageId}`, {
       next: { revalidate: 3600 },
     });
     if (!res.ok) return null;
@@ -51,7 +55,7 @@ async function getPageContent(pageId: string) {
 
 export default async function ProjectsPage() {
   const projects = await getProjects();
-  console.log('[ProjectsPage] projects:', projects.length, projects.map(p => p.name));
+  console.log('[ProjectsPage] projects:', projects.length, projects.map((p: ProjectItem) => p.name));
 
   if (projects.length === 0) {
     return (
@@ -65,7 +69,7 @@ export default async function ProjectsPage() {
   }
 
   const projectData = await Promise.all(
-    projects.map(async (p) => {
+    projects.map(async (p: ProjectItem) => {
       const data = await getPageContent(p.id);
       const firstPara = data?.blocks?.find(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,7 +87,7 @@ export default async function ProjectsPage() {
     <div className="max-w-5xl mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold mb-8">Projects</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projectData.map((p) => (
+        {projectData.map((p: ProjectItem & { description: string }) => (
           <article key={p.id} className="border rounded-xl p-6 hover:border-gray-400 transition">
             <h2 className="text-xl font-semibold mb-2">{p.name}</h2>
             {p.description && (
