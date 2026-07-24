@@ -42,13 +42,18 @@ async function getProjects(): Promise<ProjectItem[]> {
 }
 
 async function getPageContent(pageId: string) {
+  console.log('[ProjectsPage] fetching content for pageId:', pageId);
   try {
     const res = await fetch(`${API_BASE}/api/notion/page/${pageId}`, {
       next: { revalidate: 3600 },
     });
+    console.log('[ProjectsPage] content API status:', res.status, 'pageId:', pageId);
     if (!res.ok) return null;
-    return await res.json();
-  } catch {
+    const data = await res.json();
+    console.log('[ProjectsPage] content data:', JSON.stringify(data)?.substring(0, 300));
+    return data;
+  } catch (e) {
+    console.error('[ProjectsPage] content fetch error:', e);
     return null;
   }
 }
